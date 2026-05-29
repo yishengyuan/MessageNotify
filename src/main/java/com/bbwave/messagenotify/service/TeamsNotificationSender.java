@@ -37,12 +37,23 @@ public class TeamsNotificationSender implements NotificationSender {
 
     @Override
     public boolean isEnabled() {
-        return config.isEnabled()
-                && config.getWebhookUrl() != null && !config.getWebhookUrl().isBlank();
+        return config.isEnabled() && hasAnyWebhook();
+    }
+
+    private boolean hasAnyWebhook() {
+        boolean hasDefault = config.getWebhookUrl() != null && !config.getWebhookUrl().isBlank();
+        return hasDefault || !config.getWebhookRoutes().isEmpty();
     }
 
     @Override
     public void send(NotificationMessage message) {
+        String webhookUrl = config.resolveWebhookUrl(message.safeService());
+        if (webhookUrl == null || webhookUrl.isBlank()) {
+            throw new IllegalStateException(
+                    "No Teams webhook resolved for service '%s' and no default webhook-url configured"
+                            .formatted(message.safeService()));
+        }
+
         Map<String, Object> card = Map.of(
                 "@type", "MessageCard",
                 "@context", "https://schema.org/extensions",
@@ -53,13 +64,13 @@ public class TeamsNotificationSender implements NotificationSender {
         );
 
         restClient.post()
-                .uri(config.getWebhookUrl())
+                .uri(webhookUrl)
                 .contentType(MediaType.APPLICATION_JSON)
                 .body(card)
                 .retrieve()
                 .toBodilessEntity();
 
-        log.info("Teams notification delivered via webhook");
+        log.info("Teams notification for service '{}' delivered via webhook", message.safeService());
     }
 
     private String themeColor(String level) {

@@ -113,8 +113,15 @@ public class NotificationProperties {
     public static class Teams {
         /** Whether the Teams channel is enabled. */
         private boolean enabled = false;
-        /** Incoming webhook url of the Teams channel. */
+        /** Default incoming webhook url, used when no service route matches. */
         private String webhookUrl;
+        /**
+         * Per-service-type routing: {@code serviceType -> webhookUrl}. When an incoming
+         * message carries a {@code service} that matches a key here, it is delivered to
+         * the mapped Teams channel instead of the default {@link #webhookUrl}. Keys are
+         * matched case-insensitively.
+         */
+        private Map<String, String> webhookRoutes = new HashMap<>();
 
         public boolean isEnabled() {
             return enabled;
@@ -130,6 +137,26 @@ public class NotificationProperties {
 
         public void setWebhookUrl(String webhookUrl) {
             this.webhookUrl = webhookUrl;
+        }
+
+        public Map<String, String> getWebhookRoutes() {
+            return webhookRoutes;
+        }
+
+        public void setWebhookRoutes(Map<String, String> webhookRoutes) {
+            this.webhookRoutes = webhookRoutes;
+        }
+
+        /** Resolve the webhook url for a service key, falling back to the default webhook. */
+        public String resolveWebhookUrl(String serviceKey) {
+            if (serviceKey != null && !serviceKey.isBlank()) {
+                for (Map.Entry<String, String> entry : webhookRoutes.entrySet()) {
+                    if (entry.getKey().equalsIgnoreCase(serviceKey)) {
+                        return entry.getValue();
+                    }
+                }
+            }
+            return webhookUrl;
         }
     }
 }

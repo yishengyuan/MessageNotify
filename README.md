@@ -39,13 +39,15 @@ The Kafka value (and the REST body) is JSON:
 | `content` | no       | Message body.                                                               |
 | `level`   | no       | `INFO` / `WARN` / `ERROR` … used for formatting/colour (defaults to `INFO`). |
 | `channel` | no       | `telegram`, `teams`, or `all`. Falls back to `notify.default-channel`.       |
-| `service` | no       | Originating service type. Used to route Telegram messages to a specific group (see below). |
+| `service` | no       | Originating service type. Used to route messages to a specific Telegram group / Teams channel (see below). |
 
-## Routing Telegram messages by service type
+## Routing by service type
 
-Different services can be delivered to **different Telegram groups** by mapping
-the message's `service` field to a chat id under `notify.telegram.chat-routes`.
-Matching is case-insensitive; anything unmatched falls back to `notify.telegram.chat-id`.
+Both channels can deliver to **different destinations per service type** by mapping
+the message's `service` field to a target. Matching is case-insensitive; anything
+unmatched falls back to the channel's default destination.
+
+Telegram — `notify.telegram.chat-routes` (`serviceType -> chatId`):
 
 ```yaml
 notify:
@@ -58,9 +60,22 @@ notify:
       payment-service: "-1002222222222" # payment-service -> group B
 ```
 
+Teams — `notify.teams.webhook-routes` (`serviceType -> webhookUrl`):
+
+```yaml
+notify:
+  teams:
+    enabled: true
+    webhook-url: "https://outlook.office.com/webhook/default..."  # default channel
+    webhook-routes:
+      order-service: "https://outlook.office.com/webhook/order..."     # -> channel A
+      payment-service: "https://outlook.office.com/webhook/payment..." # -> channel B
+```
+
 > Note: the `service` value is set by each **producing** service. To also keep
 > per-service ordering in Kafka, producers should use `service` as the message key
-> (so a service's messages land on the same partition).
+> (so a service's messages land on the same partition). See `docs/data-flow.drawio`
+> for the end-to-end data flow and partition mapping.
 
 ## Configuration
 

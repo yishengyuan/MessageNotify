@@ -48,7 +48,13 @@ notify:
       # payment-service: "-1002222222222"
   teams:
     enabled: ${TEAMS_ENABLED:false}
+    # Default Teams channel, used when a message's `service` does not match any route below
     webhook-url: ${TEAMS_WEBHOOK_URL:}
+    # Route by service type to different Teams channels (serviceType -> webhookUrl).
+    # Keys are matched case-insensitively against the message's `service` field.
+    webhook-routes:
+      # order-service: "https://outlook.office.com/webhook/aaa..."
+      # payment-service: "https://outlook.office.com/webhook/bbb..."
 
 logging:
   level:
