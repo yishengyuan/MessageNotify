@@ -1,0 +1,49 @@
+spring:
+  application:
+    name: message-notify
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    consumer:
+      group-id: ${KAFKA_GROUP_ID:message-notify}
+      auto-offset-reset: latest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+
+# Application HTTP port
+server:
+  port: 8080
+
+# Metrics / actuator served on a separate management port
+management:
+  server:
+    port: 8088
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus,metrics
+  endpoint:
+    health:
+      probes:
+        enabled: true
+  prometheus:
+    metrics:
+      export:
+        enabled: true
+
+notify:
+  # Default channel when a message does not declare one: telegram | teams | all
+  default-channel: ${NOTIFY_DEFAULT_CHANNEL:telegram}
+  kafka:
+    topic: ${NOTIFY_KAFKA_TOPIC:notifications}
+  telegram:
+    enabled: ${TELEGRAM_ENABLED:false}
+    bot-token: ${TELEGRAM_BOT_TOKEN:}
+    chat-id: ${TELEGRAM_CHAT_ID:}
+    api-base-url: ${TELEGRAM_API_BASE_URL:https://api.telegram.org}
+  teams:
+    enabled: ${TEAMS_ENABLED:false}
+    webhook-url: ${TEAMS_WEBHOOK_URL:}
+
+logging:
+  level:
+    com.bbwave.messagenotify: INFO
