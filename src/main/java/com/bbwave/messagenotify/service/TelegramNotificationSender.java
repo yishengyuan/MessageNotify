@@ -35,14 +35,26 @@ public class TelegramNotificationSender implements NotificationSender {
     public boolean isEnabled() {
         return config.isEnabled()
                 && config.getBotToken() != null && !config.getBotToken().isBlank()
-                && config.getChatId() != null && !config.getChatId().isBlank();
+                && hasAnyChat();
+    }
+
+    private boolean hasAnyChat() {
+        boolean hasDefault = config.getChatId() != null && !config.getChatId().isBlank();
+        return hasDefault || !config.getChatRoutes().isEmpty();
     }
 
     @Override
     public void send(NotificationMessage message) {
+        String chatId = config.resolveChatId(message.safeService());
+        if (chatId == null || chatId.isBlank()) {
+            throw new IllegalStateException(
+                    "No Telegram chat id resolved for service '%s' and no default chat-id configured"
+                            .formatted(message.safeService()));
+        }
+
         String url = "%s/bot%s/sendMessage".formatted(stripTrailingSlash(config.getApiBaseUrl()), config.getBotToken());
         Map<String, Object> body = Map.of(
-                "chat_id", config.getChatId(),
+                "chat_id", chatId,
                 "text", render(message),
                 "parse_mode", "HTML"
         );
@@ -54,7 +66,7 @@ public class TelegramNotificationSender implements NotificationSender {
                 .retrieve()
                 .toBodilessEntity();
 
-        log.info("Telegram notification delivered to chat {}", config.getChatId());
+        log.info("Telegram notification for service '{}' delivered to chat {}", message.safeService(), chatId);
     }
 
     private String render(NotificationMessage message) {

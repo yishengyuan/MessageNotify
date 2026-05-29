@@ -2,6 +2,9 @@ package com.bbwave.messagenotify.config;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
+import java.util.HashMap;
+import java.util.Map;
+
 /**
  * Configuration for the notification channels.
  *
@@ -41,8 +44,15 @@ public class NotificationProperties {
         private boolean enabled = false;
         /** Bot token issued by @BotFather. */
         private String botToken;
-        /** Target chat id (user, group or channel). */
+        /** Default chat id (user, group or channel) used when no service route matches. */
         private String chatId;
+        /**
+         * Per-service-type routing: {@code serviceType -> chatId}. When an incoming
+         * message carries a {@code service} that matches a key here, it is delivered
+         * to the mapped group instead of the default {@link #chatId}. Keys are matched
+         * case-insensitively.
+         */
+        private Map<String, String> chatRoutes = new HashMap<>();
         /** Base API url; override when using a proxy / self-hosted bot api. */
         private String apiBaseUrl = "https://api.telegram.org";
 
@@ -68,6 +78,26 @@ public class NotificationProperties {
 
         public void setChatId(String chatId) {
             this.chatId = chatId;
+        }
+
+        public Map<String, String> getChatRoutes() {
+            return chatRoutes;
+        }
+
+        public void setChatRoutes(Map<String, String> chatRoutes) {
+            this.chatRoutes = chatRoutes;
+        }
+
+        /** Resolve the chat id for a service key, falling back to the default chat id. */
+        public String resolveChatId(String serviceKey) {
+            if (serviceKey != null && !serviceKey.isBlank()) {
+                for (Map.Entry<String, String> entry : chatRoutes.entrySet()) {
+                    if (entry.getKey().equalsIgnoreCase(serviceKey)) {
+                        return entry.getValue();
+                    }
+                }
+            }
+            return chatId;
         }
 
         public String getApiBaseUrl() {

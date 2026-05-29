@@ -51,7 +51,7 @@ class NotificationDispatcherTest {
         NotificationDispatcher dispatcher = new NotificationDispatcher(
                 List.of(telegram, teams), propertiesWithDefault("telegram"), new SimpleMeterRegistry());
 
-        dispatcher.dispatch(new NotificationMessage("hi", "body", "INFO", "teams"));
+        dispatcher.dispatch(new NotificationMessage("hi", "body", "INFO", "teams", null));
 
         assertThat(telegram.received).isEmpty();
         assertThat(teams.received).hasSize(1);
@@ -64,7 +64,7 @@ class NotificationDispatcherTest {
         NotificationDispatcher dispatcher = new NotificationDispatcher(
                 List.of(telegram, teams), propertiesWithDefault("telegram"), new SimpleMeterRegistry());
 
-        dispatcher.dispatch(new NotificationMessage("hi", "body", "INFO", "all"));
+        dispatcher.dispatch(new NotificationMessage("hi", "body", "INFO", "all", null));
 
         assertThat(telegram.received).hasSize(1);
         assertThat(teams.received).hasSize(1);
@@ -77,7 +77,7 @@ class NotificationDispatcherTest {
         NotificationDispatcher dispatcher = new NotificationDispatcher(
                 List.of(telegram, teams), propertiesWithDefault("teams"), new SimpleMeterRegistry());
 
-        dispatcher.dispatch(new NotificationMessage("hi", "body", "INFO", null));
+        dispatcher.dispatch(new NotificationMessage("hi", "body", "INFO", null, null));
 
         assertThat(telegram.received).isEmpty();
         assertThat(teams.received).hasSize(1);
@@ -89,7 +89,7 @@ class NotificationDispatcherTest {
         NotificationDispatcher dispatcher = new NotificationDispatcher(
                 List.of(telegram), propertiesWithDefault("telegram"), new SimpleMeterRegistry());
 
-        dispatcher.dispatch(new NotificationMessage("hi", "body", "INFO", "telegram"));
+        dispatcher.dispatch(new NotificationMessage("hi", "body", "INFO", "telegram", null));
 
         assertThat(telegram.received).isEmpty();
     }

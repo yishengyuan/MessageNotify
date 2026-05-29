@@ -28,7 +28,8 @@ The Kafka value (and the REST body) is JSON:
   "title": "Service alert",
   "content": "CPU usage above 90% on node-01",
   "level": "ERROR",
-  "channel": "telegram"
+  "channel": "telegram",
+  "service": "order-service"
 }
 ```
 
@@ -38,6 +39,28 @@ The Kafka value (and the REST body) is JSON:
 | `content` | no       | Message body.                                                               |
 | `level`   | no       | `INFO` / `WARN` / `ERROR` … used for formatting/colour (defaults to `INFO`). |
 | `channel` | no       | `telegram`, `teams`, or `all`. Falls back to `notify.default-channel`.       |
+| `service` | no       | Originating service type. Used to route Telegram messages to a specific group (see below). |
+
+## Routing Telegram messages by service type
+
+Different services can be delivered to **different Telegram groups** by mapping
+the message's `service` field to a chat id under `notify.telegram.chat-routes`.
+Matching is case-insensitive; anything unmatched falls back to `notify.telegram.chat-id`.
+
+```yaml
+notify:
+  telegram:
+    enabled: true
+    bot-token: 123:abc
+    chat-id: "-1000000000000"          # default group
+    chat-routes:
+      order-service: "-1001111111111"   # order-service -> group A
+      payment-service: "-1002222222222" # payment-service -> group B
+```
+
+> Note: the `service` value is set by each **producing** service. To also keep
+> per-service ordering in Kafka, producers should use `service` as the message key
+> (so a service's messages land on the same partition).
 
 ## Configuration
 
